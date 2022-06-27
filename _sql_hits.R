@@ -26,7 +26,7 @@ df_dt_only <- process_one %>%
   select(c(1,6:19,46:51,53,64,66:67)) %>%
   select(c(1:15,22,24,25)) %>%
   select(c(1,11,9,2:8,10,12:18)) %>%
-  select(c(1:8,14,9,12,10:11,13,15:18))
+  select(c(1:8,14,9,12,10:11,13,15:18)) %>%
 # check if columns are actually duplicated 
 # time difference in between each stage
 # actual operation time may not matter, although could group by type?
