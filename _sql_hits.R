@@ -1,5 +1,5 @@
 # load libraries
-shelf(odbc, DBI, tidyverse, lubridate)
+shelf(odbc, DBI, tidyverse, lubridate, here)
 
 con <- DBI::dbConnect(odbc::odbc(),
                       Driver   = "SQL Server",

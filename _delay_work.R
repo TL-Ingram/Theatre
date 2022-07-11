@@ -28,41 +28,33 @@ time_difference <- df_datetime_only %>%
   mutate(time_diff = as_factor(time_diff),
          diff = ifelse(time_diff == "intime - sentfor" & diff < 0, NA, diff),
          diff = ifelse(time_diff == "in_theatre - ana_st" & diff < 0, NA, diff),
-         diff = ifelse(time_diff == "into_recovery - op_end" & diff < 0, NA, diff))
+         diff = ifelse(time_diff == "into_recovery - op_end" & diff < 0, NA, diff),
+         time_loss_logic = as_factor(time_loss_logic))
 
 more <- time_difference %>%
   pivot_wider(names_from = "time_diff", values_from = "diff") %>%
   drop_na(.) %>%
-  pivot_longer(c(!1:6), names_to = "time_diff", values_to = "mins")
+  pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff")
 
 #need to do more filtering of outliers. Can't trust all data - could simply remove all outliers that are > or < 3x IQR.
 
+test3 <- more %>%
+  ggplot(aes(x = year, y = diff, group = time_loss_logic, colour = time_loss_logic)) +
+  geom_point(stat = "summary", fun = median) +
+  stat_summary(fun = median, geom = "line") +
+  facet_grid(. ~ time_diff)
+  ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10)
+test3
+?stat_summary
+
+
+  
   
 
-# not including time taken in the theatre or recovery time
-time_difference %>% 
-  filter(diff > 0) %>%
-  ggplot(aes(time_diff, diff)) +
-  geom_boxplot() +
-    facet_wrap(.~time_loss_logic)
+# table of differences
+# graph should have median and quartiles shaded
+# appropriate dt naming
 
-time_difference %>%
-  group_by(time_loss_logic) %>%
-  summarise(n=n(),
-            median = n/))
-              
-test1 <- time_difference %>%
-  filter(time_loss_logic == 1)
-tapply(test1$diff, test1$time_diff, summary)
-
-test2 <- time_difference %>%
-  filter(time_loss_logic == 0)
-tapply(test2$diff, test2$time_diff, summary)
-
-
-# stats <- time_difference %>%
-#   group_by(time_diff) %>%
-#   summarise(x = quantile(diff, c(0.25, 0.5, 0.75)), q = c(0.25, 0.5, 0.75))
 
 # na_count <- time_diff %>% #18% sent_porter == NA. Going to remove all rows containing NAs.
 #   group_by(time_diff) %>%
