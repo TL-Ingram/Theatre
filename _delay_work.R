@@ -29,23 +29,21 @@ time_difference <- df_datetime_only %>%
          diff = ifelse(time_diff == "intime - sentfor" & diff < 0, NA, diff),
          diff = ifelse(time_diff == "in_theatre - ana_st" & diff < 0, NA, diff),
          diff = ifelse(time_diff == "into_recovery - op_end" & diff < 0, NA, diff),
-         time_loss_logic = as_factor(time_loss_logic))
-
-more <- time_difference %>%
+         time_loss_logic = as_factor(time_loss_logic)) %>%
   pivot_wider(names_from = "time_diff", values_from = "diff") %>%
   drop_na(.) %>%
   pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff")
 
 #need to do more filtering of outliers. Can't trust all data - could simply remove all outliers that are > or < 3x IQR.
 
-test3 <- more %>%
+yearly_loss_by_stage <- time_difference %>%
   ggplot(aes(x = year, y = diff, group = time_loss_logic, colour = time_loss_logic)) +
   geom_point(stat = "summary", fun = median) +
   stat_summary(fun = median, geom = "line") +
   facet_grid(. ~ time_diff)
   ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10)
-test3
-?stat_summary
+yearly_loss_by_stage
+
 
 
   
@@ -54,6 +52,7 @@ test3
 # table of differences
 # graph should have median and quartiles shaded
 # appropriate dt naming
+# more outlier removal required
 
 
 # na_count <- time_diff %>% #18% sent_porter == NA. Going to remove all rows containing NAs.
