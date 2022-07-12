@@ -18,40 +18,71 @@ time_difference <- df_datetime_only %>%
   group_by(id) %>%
   mutate(diff = mins - lag(mins)) %>%
   select(-mins) %>%
-  mutate(time_diff = replace(time_diff, time_diff == "in_time", "intime - sentfor"),
-         time_diff = replace(time_diff, time_diff == "anaesthetic_start_time", "ana_st - intime"),
-         time_diff = replace(time_diff, time_diff == "into_theatre", "in_theatre - ana_st"),
-         time_diff = replace(time_diff, time_diff == "operation_end_time", "op_end - in_theatre"),
-         time_diff = replace(time_diff, time_diff == "recovery_time", "into_recovery - op_end"),
-         time_diff = replace(time_diff, time_diff == "out_of_recovery", "out_recov - recovery")) %>%
-  filter(!(time_diff == "sent_porter" | time_diff == "op_end - in_theatre" | time_diff == "out_recov - recovery")) %>%
+  mutate(time_diff = replace(time_diff, time_diff == "in_time", "into_pre_op - sent_for"),
+         time_diff = replace(time_diff, time_diff == "anaesthetic_start_time", "anaesthetic_start - into_pre_op"),
+         time_diff = replace(time_diff, time_diff == "into_theatre", "into_theatre - anaesthetic_start"),
+         time_diff = replace(time_diff, time_diff == "operation_end_time", "operation_end - into_theatre"),
+         time_diff = replace(time_diff, time_diff == "recovery_time", "into_recovery - operation_end"),
+         time_diff = replace(time_diff, time_diff == "out_of_recovery", "out_recovery - recovery_start")) %>%
+  filter(!(time_diff == "sent_porter" | time_diff == "operation_end - into_theatre" | time_diff == "out_recovery - recovery_start")) %>%
   mutate(time_diff = as_factor(time_diff),
-         diff = ifelse(time_diff == "intime - sentfor" & diff < 0, NA, diff),
-         diff = ifelse(time_diff == "in_theatre - ana_st" & diff < 0, NA, diff),
-         diff = ifelse(time_diff == "into_recovery - op_end" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "into_pre_op - sent_for" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "into_theatre - anaesthetic_start" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "into_recovery - operation_end" & diff < 0, NA, diff),
          time_loss_logic = as_factor(time_loss_logic)) %>%
   pivot_wider(names_from = "time_diff", values_from = "diff") %>%
   drop_na(.) %>%
-  pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff")
+  pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff") %>%
+  mutate(time_diff = as_factor(time_diff))
 
 #need to do more filtering of outliers. Can't trust all data - could simply remove all outliers that are > or < 3x IQR.
 
 yearly_loss_by_stage <- time_difference %>%
   ggplot(aes(x = year, y = diff, group = time_loss_logic, colour = time_loss_logic)) +
-  geom_point(stat = "summary", fun = median) +
-  stat_summary(fun = median, geom = "line") +
-  facet_grid(. ~ time_diff)
-  ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10)
+  geom_point(stat = "summary", fun = median, alpha = 0.7) +
+  stat_summary(fun = median, geom = "line", size = 1.5, alpha = 0.7) +
+  facet_grid(. ~ time_diff) +
+  scale_colour_manual(values = c("steelblue", "red")) +
+  expand_limits(y = 0:30) +
+  scale_y_continuous(breaks = seq(0, 30, 5)) +
+  theme_ipsum(
+    axis_title_just = "cc",
+    axis_title_face = "bold",
+    axis_text_size = 16,
+    axis_title_size = 18
+  ) +
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.line.x = element_line("grey50"),
+    axis.ticks = element_line(colour = "grey50", size = 0.2),
+    axis.ticks.x = element_line(colour = "grey50", size = 0.2),
+    axis.text.x = element_text(
+      angle = 25,
+      vjust = 1.0, hjust = 1.0,
+    ),
+    plot.caption = element_text(
+      size = 14,
+      face = "italic", color = "black"
+    ),
+    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 16),
+    strip.text.x = element_text(
+      size = 14, color = "black"
+    ),
+  ) +
+  labs(
+    x = "Year",
+    y = "Time (minutes)",
+    colour = "Allowed time exceeded",
+    title = "Yearly median time taken between theatre stages"
+  )
+#ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10) 
 yearly_loss_by_stage
 
 
-
-  
-  
-
+#ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10) 
 # table of differences
 # graph should have median and quartiles shaded
-# appropriate dt naming
 # more outlier removal required
 
 
