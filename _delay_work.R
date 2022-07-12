@@ -18,17 +18,17 @@ time_difference <- df_datetime_only %>%
   group_by(id) %>%
   mutate(diff = mins - lag(mins)) %>%
   select(-mins) %>%
-  mutate(time_diff = replace(time_diff, time_diff == "in_time", "into_pre_op - sent_for"),
-         time_diff = replace(time_diff, time_diff == "anaesthetic_start_time", "anaesthetic_start - into_pre_op"),
-         time_diff = replace(time_diff, time_diff == "into_theatre", "into_theatre - anaesthetic_start"),
-         time_diff = replace(time_diff, time_diff == "operation_end_time", "operation_end - into_theatre"),
-         time_diff = replace(time_diff, time_diff == "recovery_time", "into_recovery - operation_end"),
+  mutate(time_diff = replace(time_diff, time_diff == "in_time", "FROM patient sent for TO patient into pre op"),
+         time_diff = replace(time_diff, time_diff == "anaesthetic_start_time", "FROM patient entering pre-op TO anaesthetic start"),
+         time_diff = replace(time_diff, time_diff == "into_theatre", "FROM anaesthetic start TO patient into theatre"),
+         time_diff = replace(time_diff, time_diff == "operation_end_time", "FROM patient into theatre TO operation end"),
+         time_diff = replace(time_diff, time_diff == "recovery_time", "FROM operation end TO patient into recovery"),
          time_diff = replace(time_diff, time_diff == "out_of_recovery", "out_recovery - recovery_start")) %>%
-  filter(!(time_diff == "sent_porter" | time_diff == "operation_end - into_theatre" | time_diff == "out_recovery - recovery_start")) %>%
+  filter(!(time_diff == "sent_porter" | time_diff == "FROM patient into theatre TO operation end" | time_diff == "out_recovery - recovery_start")) %>%
   mutate(time_diff = as_factor(time_diff),
-         diff = ifelse(time_diff == "into_pre_op - sent_for" & diff < 0, NA, diff),
-         diff = ifelse(time_diff == "into_theatre - anaesthetic_start" & diff < 0, NA, diff),
-         diff = ifelse(time_diff == "into_recovery - operation_end" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "FROM patient sent for TO patient into pre op" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "FROM anaesthetic start TO patient into theatre" & diff < 0, NA, diff),
+         diff = ifelse(time_diff == "FROM operation end TO patient into recovery" & diff < 0, NA, diff),
          time_loss_logic = as_factor(time_loss_logic)) %>%
   pivot_wider(names_from = "time_diff", values_from = "diff") %>%
   drop_na(.) %>%
@@ -40,34 +40,37 @@ time_difference <- df_datetime_only %>%
 yearly_loss_by_stage <- time_difference %>%
   ggplot(aes(x = year, y = diff, group = time_loss_logic, colour = time_loss_logic)) +
   geom_point(stat = "summary", fun = median, alpha = 0.7) +
-  stat_summary(fun = median, geom = "line", size = 1.5, alpha = 0.7) +
-  facet_grid(. ~ time_diff) +
+  stat_summary(fun = median, geom = "line", size = 2.25, alpha = 0.7) +
+  facet_grid(. ~ time_diff, labeller = label_wrap_gen(width=28)) +
   scale_colour_manual(values = c("steelblue", "red")) +
   expand_limits(y = 0:30) +
   scale_y_continuous(breaks = seq(0, 30, 5)) +
+  scale_x_continuous(breaks = seq(2010, 2022, 2)) +
   theme_ipsum(
     axis_title_just = "cc",
     axis_title_face = "bold",
-    axis_text_size = 16,
-    axis_title_size = 18
+    axis_text_size = 24,
+    axis_title_size = 27
   ) +
   theme(
-    panel.grid.minor = element_blank(),
+    panel.grid.minor = element_line("grey30"),
+    panel.grid.major = element_line("grey30"),
     axis.line.x = element_line("grey50"),
     axis.ticks = element_line(colour = "grey50", size = 0.2),
     axis.ticks.x = element_line(colour = "grey50", size = 0.2),
     axis.text.x = element_text(
-      angle = 25,
+      angle = 35,
       vjust = 1.0, hjust = 1.0,
     ),
+    plot.title = element_text(size = 34),
     plot.caption = element_text(
-      size = 14,
+      size = 21,
       face = "italic", color = "black"
     ),
-    legend.title = element_text(size = 16, face = "bold"),
-    legend.text = element_text(size = 16),
+    legend.title = element_text(size = 24, face = "bold"),
+    legend.text = element_text(size = 24),
     strip.text.x = element_text(
-      size = 14, color = "black"
+      size = 21, color = "black"
     ),
   ) +
   labs(
@@ -76,7 +79,7 @@ yearly_loss_by_stage <- time_difference %>%
     colour = "Allowed time exceeded",
     title = "Yearly median time taken between theatre stages"
   )
-#ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10) 
+ggsave(here("plots", "yearly_time_loss.jpg"), width = 25, height = 20) 
 yearly_loss_by_stage
 
 
