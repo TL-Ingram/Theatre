@@ -1,0 +1,9 @@
+time_diff,time_loss_logic,median,q25,q75,max,IQR,eIQR
+FROM patient sent for TO patient into pre op,0,10,6,14,558,8,24
+FROM patient sent for TO patient into pre op,1,11,7,16,580,9,27
+FROM patient entering pre-op TO anaesthetic start,0,2,0,6,282,6,18
+FROM patient entering pre-op TO anaesthetic start,1,5,1,10,252,9,27
+FROM anaesthetic start TO patient into theatre,0,14,3,25,401,22,66
+FROM anaesthetic start TO patient into theatre,1,23,13,37,416,24,72
+FROM operation end TO patient into recovery,0,7,4,10,669,6,18
+FROM operation end TO patient into recovery,1,8,5,12,366,7,21
