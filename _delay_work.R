@@ -33,9 +33,29 @@ time_difference <- df_datetime_only %>%
   pivot_wider(names_from = "time_diff", values_from = "diff") %>%
   drop_na(.) %>%
   pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff") %>%
-  mutate(time_diff = as_factor(time_diff))
+  mutate(time_diff = as_factor(time_diff)) #%>%
+time_difference <- time_difference %>%
+  left_join(outlier_summary, by = c("time_diff", "time_loss_logic")) %>%
+  mutate(diff = ifelse(diff > eIQR, NA, diff)) %>%
+  select(-c(9:14)) %>%
+  pivot_wider(names_from = "time_diff", values_from = "diff") %>%
+  drop_na(.) %>%
+  pivot_longer(!c(1:6), names_to = "time_diff", values_to = "diff") %>%
+  mutate(time_diff = as_factor(time_diff)) #%>%
 
 #need to do more filtering of outliers. Can't trust all data - could simply remove all outliers that are > or < 3x IQR.
+# outlier_summary <- time_difference %>%
+#   group_by(time_diff, time_loss_logic) %>%
+#   summarise(median = median(diff, na.rm = TRUE),
+#             q25 = quantile(diff, 0.25, na.rm = TRUE),
+#             q75 = quantile(diff, 0.75, na.rm = TRUE),
+#             max = max(diff),
+#             IQR = q75 - q25,
+#             eIQR = 3*IQR) #%>%
+# write_csv(here("tables", "outlier_summary.csv"))
+
+#anything above eIQR in diff column should be made NA. Then pivot wider, drop_na, pivot longer so we're back where we were and then plot the graph below again
+
 
 yearly_loss_by_stage <- time_difference %>%
   ggplot(aes(x = year, y = diff, group = time_loss_logic, colour = time_loss_logic)) +
@@ -82,12 +102,29 @@ yearly_loss_by_stage <- time_difference %>%
 ggsave(here("plots", "yearly_time_loss.jpg"), width = 25, height = 20) 
 yearly_loss_by_stage
 
+distribution <- time_difference %>%
+  ggplot(aes(diff, fill = time_diff)) +
+  geom_density(alpha = 0.25, size = 1) +
+  #facet_wrap(.~year) +
+  xlim(0,100) +
+  xlab("Time (minutes)") +
+  theme_ipsum(
+    axis_title_just = "cc",
+    axis_title_face = "bold",
+    axis_text_size = 16,
+    axis_title_size = 18)
+ggsave(here("plots", "dist_time_differences_outliers_removed.jpg"), width = 15, height = 15)
+distribution
 
-#ggsave(here("plots", "yearly_time_loss.png"), width = 10, height = 10) 
-# table of differences
-# graph should have median and quartiles shaded
-# more outlier removal required
 
+# DONE table of differences
+# DONE graph should have median and quartiles shaded
+# DONE more outlier removal required
+# table of minute differences between delayed and not delayed
+# facet by theatre
+# facet by type of surgery - how many types?
+# make it so it's like, per surgery median time taken is ??. For those that are delayed on average the only diff is [insert stage]
+# do something for last financial year
 
 # na_count <- time_diff %>% #18% sent_porter == NA. Going to remove all rows containing NAs.
 #   group_by(time_diff) %>%
@@ -96,21 +133,17 @@ yearly_loss_by_stage
 #             prop = sum/n)
 
 
-# create df of time differences
-# create representative random sample of each year
-# graph
+# count of delays, or proportion? Delay minutes total? How to do that to make it representative for each year. Maybe range?
 # forecast next year delays
 # facet by theatre
+# do something about the reasons
 
-#column with delayed = 1, not delayed = 2
-#do two things: 1 = delayed mins can be used for forecasting per year
-#2 = only look at time differences between stages for delayed = 1
-#then I suppose can compare times on stages between delayed = 1 and delayed = 0
+# DONE column with delayed = 1, not delayed = 2
+# do two things: 1 = delayed mins can be used for forecasting per year
+# DONE 2 = only look at time differences between stages for delayed = 1
+# DONE then I suppose can compare times on stages between delayed = 1 and delayed = 0
 
 
-#next minus subsequent columns from each other
-#plot
-#group by only those that have reasons for delay in start or finish then look at reasons. Do individually for start then finish
 
 
 
